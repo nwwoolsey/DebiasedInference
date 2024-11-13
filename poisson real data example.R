@@ -1,0 +1,299 @@
+library(latex2exp)
+tess<-function(V,S,K){#function that returns tessarine coefficients
+  eq1<-c(0,0,0,0,S^2,0,45*V^2-9*K,0,-36*V,0,36)
+  if(V==0){
+    return(c(0,0,0,1))
+  }
+  sols<-polyroot(eq1)
+  ds<- Re(sols[which(abs(Im(sols))<10^(-4) & Re(sols)!=0)])
+  if(length(ds)==0){
+    fn<-function(theta,V,S,K){
+      b<-theta[1]
+      c<-theta[2]
+      d<-theta[3]
+      f1<-(V-b^2+c^2-d^2)
+      f2<-(S-6*b*c*d)/3
+      f3<-(K+b^4+c^4+d^4-6*V*(b^2-c^2+d^2)-6*(b^2*c^2-b^2*d^2+c^2*d^2))/12
+      return((f1^2+f2^2+f3^2))
+    }
+    gr<-function(theta,V,S,K){
+      b<-theta[1]
+      c<-theta[2]
+      d<-theta[3]
+      fb<--4/3*c*d*(S-6*b*c*d)+4*b*(b^2-c^2+d^2-V)+1/18*b*(b^2-3*(c^2-d^2+V))*(b^4+c^4+d^4+K-6*d^2*V+6*c^2*(V-d^2)-6*b^2*(c^2-d^2+V))
+      fc<--4/3*b*d*(S-6*b*c*d)+4*c*(V-b^2+c^2-d^2)+1/18*c*(-3*b^2+c^2-3*d^2+3*V)*(b^4+c^4+d^4+K-6*d^2*V+6*c^2*(V-d^2)-6*b^2*(c^2-d^2+V))
+      fd<--4/3*b*c*(S-6*b*c*d)+4*d*(b^2-c^2+d^2-V)+1/18*d*(3*b^2-3*c^2+d^2-3*V)*(b^4+c^4+d^4+K-6*d^2*V+6*c^2*(V-d^2)-6*b^2*(c^2-d^2+V))
+      return(c(fb,fc,fd))
+    }
+    temp<-function(sdw){
+      V<-V/sdw^2
+      S<-S/sdw^3
+      K<-K/sdw^4
+      f1<-function(b,c,d){
+        return(V-b^2+c^2-d^2)
+      }
+      f2<-function(b,c,d){
+        return(S-6*b*c*d)
+      }
+      f3<-function(b,c,d){
+        return(K+b^4+c^4+d^4-6*V*(b^2-c^2+d^2)-6*(b^2*c^2-b^2*d^2+c^2*d^2))
+      }
+      out<-optim(c(sqrt(V),.1,-.1),fn=fn,gr=gr,method="BFGS",V=V,S=S,K=K)$par
+      
+      b<-out[1]
+      c<-out[2]
+      d<-out[3]
+      err<-abs(f1(b,c,d))/V+abs(f2(b,c,d)/3/S)+abs(f3(b,c,d)/6)/K
+      return(err)
+    }
+    sdw<-optim(1,fn=temp,method="Brent",lower=.3,upper=5)$par
+    out<-optim(c(sqrt(V),.1,-.1),fn=fn,gr=gr,method="BFGS",V=V/sdw^2,S=S/sdw^3,K=K/sdw^4)$par
+  }
+  if(length(ds)!=0){
+    min<-1000000000000000
+    for(d in ds){
+      eq2<-c(-S^2,0,36*d^2*(V-d^2),0,36*d^2)
+      sols2<-polyroot(eq2)
+      cs<- Re(sols2[which(abs(Im(sols2))<10^(-4))])
+      if(length(cs)==0){
+        break
+      }
+      for(c in cs){
+        b<-sign(S)/sign(c)/sign(d)*sqrt(V+c^2-d^2)
+        temp<-sqrt(b^2+c^2+d^2)
+        if(temp< min){
+          sdw<-1
+          out<-c(b,c,d)
+          min<-temp
+        }
+      }
+    }
+  }
+  if(length(cs)==0||length(ds)==0){
+    fn<-function(theta,V,S,K){
+      b<-theta[1]
+      c<-theta[2]
+      d<-theta[3]
+      f1<-(V-b^2+c^2-d^2)
+      f2<-(S-6*b*c*d)/3
+      f3<-(K+b^4+c^4+d^4-6*V*(b^2-c^2+d^2)-6*(b^2*c^2-b^2*d^2+c^2*d^2))/12
+      return((f1^2+f2^2+f3^2))
+    }
+    gr<-function(theta,V,S,K){
+      b<-theta[1]
+      c<-theta[2]
+      d<-theta[3]
+      fb<--4/3*c*d*(S-6*b*c*d)+4*b*(b^2-c^2+d^2-V)+1/18*b*(b^2-3*(c^2-d^2+V))*(b^4+c^4+d^4+K-6*d^2*V+6*c^2*(V-d^2)-6*b^2*(c^2-d^2+V))
+      fc<--4/3*b*d*(S-6*b*c*d)+4*c*(V-b^2+c^2-d^2)+1/18*c*(-3*b^2+c^2-3*d^2+3*V)*(b^4+c^4+d^4+K-6*d^2*V+6*c^2*(V-d^2)-6*b^2*(c^2-d^2+V))
+      fd<--4/3*b*c*(S-6*b*c*d)+4*d*(b^2-c^2+d^2-V)+1/18*d*(3*b^2-3*c^2+d^2-3*V)*(b^4+c^4+d^4+K-6*d^2*V+6*c^2*(V-d^2)-6*b^2*(c^2-d^2+V))
+      return(c(fb,fc,fd))
+    }
+    temp<-function(sdw){
+      V<-V/sdw^2
+      S<-S/sdw^3
+      K<-K/sdw^4
+      f1<-function(b,c,d){
+        return(V-b^2+c^2-d^2)
+      }
+      f2<-function(b,c,d){
+        return(S-6*b*c*d)
+      }
+      f3<-function(b,c,d){
+        return(K+b^4+c^4+d^4-6*V*(b^2-c^2+d^2)-6*(b^2*c^2-b^2*d^2+c^2*d^2))
+      }
+      out<-optim(c(sqrt(V),.1,-.1),fn=fn,gr=gr,method="BFGS",V=V,S=S,K=K)$par
+      b<-out[1]
+      c<-out[2]
+      d<-out[3]
+      if(Skew==0){
+        err<-abs(f1(b,c,d)/V+abs(f3(b,c,d)/6/K))
+      }else{
+        err<-abs(f1(b,c,d))/V+abs(f2(b,c,d)/3/S)+abs(f3(b,c,d)/6)/K
+      }
+      return(err)
+    }
+    sdw<-optim(1,fn=temp,method="Brent",lower=.3,upper=5)$par
+    out<-optim(c(sqrt(V),.1,-.1),fn=fn,gr=gr,method="BFGS",V=V/sdw^2,S=S/sdw^3,K=K/sdw^4)$par
+  }
+  return(c(out,sdw))
+}
+
+pois<-function(data){#novel poisson regression method
+  w<-data[1:n]-mu
+  y<-data[(n+1):(2*n)]
+  wstar<-w/sdw
+  score<-function(theta){
+    b0<-theta[1]
+    b1<-theta[2]
+    #score1<-mean(y-Re(exp(b0+b1*(wstar+b*1i))*cosh(b1*(c+d*1i))))^2
+    #score2<-mean(y*wstar-Re(exp(b0+b1*(wstar+b*1i))*((wstar+b*1i)*cosh(b1*(c+d*1i))+(c+d*1i)*sinh(b1*(c+d*1i)))))^2
+    score1<-mean(y-Re(exp(b0+b1*(wstar+b*1i))*cosh(b1*(c+d*1i))))^2
+    score2<-mean(y*wstar-Re(exp(b0+b1*(wstar+b*1i))*((wstar+b*1i)*cosh(b1*(c+d*1i))+(c+d*1i)*sinh(b1*(c+d*1i)))))^2
+    return(score1+score2)
+  }
+  nai<-naivepois(c(wstar,y))
+  out<-optim(nai,fn=score,method="Nelder-Mead")$par
+  b1<-out[2]/sdw
+  b0<-out[1]
+  return(c(b0,b1))
+}
+comp<-function(data,V){#complex error estimator
+  x<-data[1:n]-mu
+  y<-data[(n+1):(2*n)]
+  score<-function(theta){
+    b0<-theta[1]
+    b1<-theta[2]
+    score1<-sum(Re(y-exp(b0+b1*x)*cos(b1*sqrt(V))))^2
+    score2<-sum(Re(y*x-exp(b0+b1*x)*(x*cos(b1*sqrt(V))-sqrt(V)*sin(b1*sqrt(V)))))^2
+    return(score1+score2)
+  }
+  out<-optim(naivepois(data),fn=score,method="BFGS")$par
+  return(out)
+}
+cs<-function(data,V){#corrected score estimator
+  x<-data[1:n]-mu
+  y<-data[(n+1):(2*n)]
+  score<-function(theta){
+    b0<-theta[1]
+    b1<-theta[2]
+    score1<-sum(y-exp(b0+b1*x)/exp(b1^2*V/2))^2
+    score2<-sum((y*x-exp(b0+b1*x-1/2*b1^2*V)*x+V*exp(b0+b1*x+1/2*b1^2*V)*b1))^2
+    return(score1+score2)
+  }
+  out<-optim(naivepois(data),fn=score,method="BFGS")$par
+  return(out)
+}
+naivepois<-function(data){#naive estimator
+  x<-data[1:n]-mu
+  y<-data[(n+1):(2*n)]
+  score<-function(theta){
+    b0<-theta[1]
+    b1<-theta[2]
+    score1<--sum(y-exp(b0+b1*x))
+    score2<--sum(x*y-exp(b0+b1*x)*x)
+    return(score1^2+score2^2)
+  }
+  out<-optim(c(0,0),fn=score,method="BFGS")$par
+  return(out)
+}
+truepois<-function(data){#True data estimator
+  x<-data[1:n]
+  y<-data[(n+1):(2*n)]
+  score<-function(theta){
+    b0<-theta[1]
+    b1<-theta[2]
+    score1<--sum(y-exp(b0+b1*x))
+    score2<--sum(x*y-exp(b0+b1*x)*x)
+    return(score1^2+score2^2)
+  }
+  out<-optim(c(0,0),fn=score,method="BFGS")$par
+  return(out)
+}
+
+set.seed(1)
+data<-read.csv("goalies2.csv")
+goals<-data$goals#true covariates
+xgoals<-data$xGoals#observed covariates
+wins<-data$Wins#responses
+n<-length(xgoals)
+err<-xgoals-goals#errors
+mu<-mean(err)
+Va<-var(err)
+Skew<-mean((err-mu)^3)
+Kurt<-mean((err-mu)^4)
+cons<-tess(Va,Skew,Kurt)
+b<-cons[1]
+c<-cons[2]
+d<-cons[3]
+sdw<-cons[4]
+nai<-naivepois(c(xgoals,wins))
+novel<-pois(c(xgoals,wins))
+complex<-comp(c(xgoals,wins),V=Va)
+correctedscore<-cs(c(xgoals,wins),V=Va)
+true<-truepois(c(goals,wins))
+
+
+par(mfrow=c(1,2))
+par(mar=c(5.1,4.1,4.1,2.1))
+qqnorm(err,main="Normal Q-Q Plot of Errors")
+qqline(err)
+plot(goals,wins,xlab="Goals Allowed",ylab="Wins",las=1,main="Poisson Model of Wins regressed on GA",cex.main=.8)
+points(xgoals-mu,wins,pch=16)
+X<-seq(0,200,.1)
+lines(X,exp(nai[1]+nai[2]*X),lty=2,col="blue",lwd=3)
+lines(X,exp(complex[1]+complex[2]*X),lty=4,col="brown",lwd=3)
+lines(X,exp(correctedscore[1]+correctedscore[2]*X),lty=5,col="chartreuse4",lwd=2)
+lines(X,exp(novel[1]+novel[2]*X),lty=1,col="red",lwd=3)
+lines(X,exp(true[1]+true[2]*X),lty=3,col="orange",lwd=3)
+#################Standard Error Calculations
+
+tessSE<-function(data){
+  W<-data[1:n]-mu
+  Y<-data[(n+1):(2*n)]
+  novel<-pois(data)
+  b0<-novel[1]
+  b1<-novel[2]
+  A<-matrix(c(mean(exp(b0+b1*W)*cos(b*b1)*cosh(b1*c)),mean(exp(b0+b1*W)*(cosh(b1*c)*(W*cos(b*b1-b*sin(b*b1)))+c*cos(b*b1)*sinh(b1*c))),mean(exp(b0+b1*W)*(W*cos(b*b1)*cosh(b1*c)+(c*cos(b*b1)-b*sin(b*b1))*sinh(b1*c))),mean(exp(b0+b1*W)*(cosh(b1*c)*((c^2+W^2)*cos(b*b1)-b*(c+W)*sin(b*b1))-((b^2-2*c*W)*cos(b*b1)+b*(c+W)*sin(b*b1))*sinh(b1*c)))),nrow=2,ncol=2)
+  score1<-Y-Re(exp(b0+b1*(W+b*1i))*cosh(b1*(c+d*1i)))
+  score2<-Y*W-Re(exp(b0+b1*(W+b*1i))*((W+b*1i)*cosh(b1*(c+d*1i))+(c+d*1i)*sinh(b1*(c+d*1i))))
+  B<-matrix(c(mean(score1^2),mean(score1*score2),mean(score1*score2),mean(score2^2)),nrow=2,ncol=2)
+  V<-solve(A)%*%B%*%t(solve(A))/n
+  seb0<-sqrt(V[1])
+  seb1<-sqrt(V[4])
+  return(c(seb0,seb1))
+}
+naiSE<-function(data){
+  W<-data[1:n]-mu
+  Y<-data[(n+1):(2*n)]
+  nai<-naivepois(data)
+  b0<-nai[1]
+  b1<-nai[2]
+  seb0<-1/mean(exp(b0+b1*W))/n
+  seb1<-1/mean(W^2*exp(b0+b1*W))/n
+  return(c(sqrt(seb0),sqrt(seb1)))
+}
+truSE<-function(data){
+  X<-data[1:n]
+  Y<-data[(n+1):(2*n)]
+  tru<-truepois(data)
+  b0<-tru[1]
+  b1<-tru[2]
+  seb0<-1/mean(exp(b0+b1*X))/n
+  seb1<-1/mean(X^2*exp(b0+b1*X))/n
+  return(c(sqrt(seb0),sqrt(seb1)))
+}
+csSE<-function(data,V){
+  W<-data[1:n]-mu
+  Y<-data[(n+1):(2*n)]
+  correctedscore<-cs(data,V)
+  b0<-correctedscore[1]
+  b1<-correctedscore[2]
+  A<-matrix(c(mean(exp(b0-b1^2*V/2+b1*W)),mean(exp(b0+b1*W-b1^2*V/2)*(W-b1*V)),mean(exp(b0+b1*W)*(W*exp(-b1^2/2*V)-b1*V*exp(b1^2*W/2))),mean(exp(b0+b1*W-b1^2*V/2)*(W*(W-b1*V)-exp(b1^2*(V+W)/2)*V*(1+b1*(1+b1)*W)))),nrow=2,ncol=2)
+  score1<-Y-exp(b0+b1*W)/exp(b1^2*V/2)
+  score2<-(Y*W-exp(b0+b1*W-1/2*b1^2*V)*W+V*exp(b0+b1*W+1/2*b1^2*V)*b1)
+  B<-matrix(c(mean(score1^2),mean(score1*score2),mean(score1*score2),mean(score2^2)),nrow=2,ncol=2)
+  v<-solve(A)%*%B%*%t(solve(A))/n
+  seb0<-sqrt(v[1])
+  seb1<-sqrt(v[4])
+  return(c(seb0,seb1))
+}
+compSE<-function(data,V){
+  W<-data[1:n]-mu
+  Y<-data[(n+1):(2*n)]
+  complex<-comp(data,V)
+  b0<-complex[1]
+  b1<-complex[2]
+  A<-matrix(c(mean(exp(b0+b1*W)*cos(b1*sqrt(V))),mean(exp(b0+b1*W)*(W*cos(b1*sqrt(V))-sqrt(V)*sin(b1*sqrt(V)))),mean(exp(b0+b1*W)*(W*cos(b1*sqrt(V))-sqrt(V)*sin(b1*sqrt(V)))),mean(exp(b0+b1*W)*((W^2-V)*cos(b1*sqrt(V))-2*sqrt(V)*W*sin(b1*sqrt(V))))),nrow=2,ncol=2)
+  score1<-Re(Y-exp(b0+b1*W)*cos(b1*sqrt(V)))
+  score2<-Re(Y*W-exp(b0+b1*W)*(W*cos(b1*sqrt(V))-sqrt(V)*sin(b1*sqrt(V))))
+  B<-matrix(c(mean(score1^2),mean(score1*score2),mean(score1*score2),mean(score2^2)),nrow=2,ncol=2)
+  v<-solve(A)%*%B%*%t(solve(A))/n
+  seb0<-sqrt(v[1])
+  seb1<-sqrt(v[4])
+  return(c(seb0,seb1))
+}
+tessSE(c(xgoals,wins))
+naiSE(c(xgoals,wins))
+truSE(c(goals,wins))
+csSE(c(xgoals,wins),V=Va)
+compSE(c(xgoals,wins),V=Va)
