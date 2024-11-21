@@ -268,7 +268,7 @@ newlog<-function(data){#novel method
 set.seed(1)
 reliability<-seq(.8,1,.1)
 samp<-1000
-n<-500
+n<-1000
 set.seed(1)
 newbias1<-c()
 newmse1<-c()
@@ -443,10 +443,3 @@ points(reliability,newiqr2,pch=1)
 points(reliability,mccsiqr2,pch=2)
 points(reliability,rep(truiqr2,length(reliability)),pch=3)
 points(reliability,suffiqr2,pch=4)
-
-
-
-
-
-
-
