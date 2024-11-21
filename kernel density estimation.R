@@ -434,9 +434,9 @@ trumse<-rep(mean(tru[1,]),length(reliability))
 plot(NULL,xlim=c(.75,1),ylim=c(min(c(trumse)),max(mse[,2])),xlab="Reliability",ylab="",main=paste("MISE n=",n,sep=" "),las=1)
 lines(reliability,mse[,1],col="red",lty=1,lwd=2)
 lines(reliability,mse[,2],col="blue",lty=2,lwd=2)
+lines(reliability,mse[,3],col="chartreuse4",lty=4,lwd=2)
 lines(reliability,trumse,col="orange",lty=3,lwd=2)
-lines(reliability,mse[,3],col="chartreuse4",lty=5,lwd=2)
-lines(reliability,mse[,4],col="brown",lty=4,lwd=2)
+
 
 
 n<-75
@@ -503,11 +503,10 @@ tru<-apply(x,2,kdetruh,x=inputs,hs=seq(.1,5,.1))
 trumse<-rep(mean(tru[1,]),length(reliability))
 
 plot(NULL,xlim=c(.75,1),ylim=c(min(c(trumse)),max(mse[,2])),xlab="Reliability",ylab="",main=paste("MISE n=",n,sep=" "),las=1)
-lines(reliability,mse2[,1],col="red",lty=1,lwd=2)
-lines(reliability,mse2[,2],col="blue",lty=2,lwd=2)
+lines(reliability,mse[,1],col="red",lty=1,lwd=2)
+lines(reliability,mse[,2],col="blue",lty=2,lwd=2)
+lines(reliability,mse[,3],col="chartreuse4",lty=4,lwd=2)
 lines(reliability,trumse,col="orange",lty=3,lwd=2)
-lines(reliability,mse2[,3],col="chartreuse4",lty=5,lwd=2)
-lines(reliability,mse2[,4],col="brown",lty=4,lwd=2)
 
 
 #############################################################################################
